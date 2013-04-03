@@ -1,0 +1,23 @@
+{
+    "name": "simbiotica/cartodbclient-php",
+    "type": "library",
+    "description": "CartoDB SQL API v2 client for PHP",
+    "keywords": ["cartodb"],
+    "homepage": "https://github.com/simbiotica/cartoDBclient-PHP",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Tiago Garcia",
+            "email": "tiago@simbiotica.es",
+            "homepage": "http://simbiotica.es/en/",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "eher/oauth": "dev-master"
+    },
+    "autoload": {
+        "psr-0": { "Simbiotica\\CartoDBBundle": "" }
+    }
+}
