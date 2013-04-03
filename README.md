@@ -1,7 +1,5 @@
-CartoDB API v2 Client by Simbiotica 
-=====================
-
-CartoDB SQL API v2 client for PHP 5.3+
+CartoDB SQL API v2 Client for PHP by Simbiotica 
+===============================================
 
 
 Usage
