@@ -1,6 +1,34 @@
 CartoDB SQL API v2 Client for PHP by Simbiotica 
 ===============================================
 
+About
+-----
+
+A easy to use PHP client for CartoDB's SQL API v2, using OAuth authentication.
+
+
+Installation
+------------
+
+This library requires composer, a package manager for PHP.
+Just add it to your composer.json
+
+```js
+{
+    "require": {
+        "simbiotica/cartoDBclient-PHP": "*"
+    }
+}
+```
+
+and install it using the command:
+
+``` bash
+$ php composer.phar update simbiotica/cartoDBclient-PHP
+```
+
+This will install not only this library, but the required dependencies.
+
 
 Usage
 -----
