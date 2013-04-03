@@ -16,7 +16,7 @@ Just add it to your composer.json
 ```js
 {
     "require": {
-        "simbiotica/cartoDBclient-PHP": "*"
+        "simbiotica/cartodbclient-php": "*"
     }
 }
 ```
@@ -24,7 +24,7 @@ Just add it to your composer.json
 and install it using the command:
 
 ``` bash
-$ php composer.phar update simbiotica/cartoDBclient-PHP
+$ php composer.phar update simbiotica/cartodbclient-php
 ```
 
 This will install not only this library, but the required dependencies.
