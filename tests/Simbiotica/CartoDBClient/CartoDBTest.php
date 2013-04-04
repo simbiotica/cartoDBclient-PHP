@@ -8,18 +8,11 @@ use Simbiotica\CartoDBClient\PrivateConnection;
 
 use Simbiotica\CartoDBClient\SessionStorage;
 
-class CalculatorTest extends \PHPUnit_Framework_TestCase
+class CartoDBTest extends \PHPUnit_Framework_TestCase
 {
     public function testPrivateConnection()
     {
-        $config = array(
-                'api_key' => 'your-api-key',
-                'consumer_key' => 'your-consumer-key',
-                'consumer_secret' => 'your-consumer-secret',
-                'subdomain' => 'your-subdomain',
-                'email' => 'your-email',
-                'password' => 'your-password',
-        );
+        $config = CartoDBConfig::PRIVATE_CONFIG;
         
         $table = 'test1';
         $schema = array(

@@ -241,13 +241,15 @@ abstract class Connection
      * 
      * @return cartodb_id of inserted row
      */
-    public function insertRow($table, $data)
+    public function insertRow($table, $data, $transformers = array())
     {
         $keys = implode(',', array_keys($data));
         $values = array();
         foreach(array_values($data) as $key => $elem)
         {
-            if(is_null($elem))
+            if($transformers && array_key_exists($key, $transformers))
+                sprintf($transformers[$key], $elem);
+            elseif(is_null($elem))
                 $values[$key] = 'NULL';
             elseif (is_int($elem))
                 $values[$key] = sprintf('%d', $elem);
@@ -269,18 +271,22 @@ abstract class Connection
      * API v2
      * 
      * For $table, updates row with cartodb_id $row_id with $data values
+     * A set of optional transformers can be applied, to allow for sql funcitons like count() and such
      * 
      * @param unknown $table Table to be updated
      * @param unknown $row_id Cartodb_id of the row to be updated
      * @param unknown $data Array with ($column_name => $new_value) pairs to be updated 
+     * @param unknown $transformers Array with ($column_name => $transformer) to be applied to $data values 
      */
-    public function updateRow($table, $row_id, $data)
+    public function updateRow($table, $row_id, $data, $transformers = array())
     {
         $keys = implode(',', array_keys($data));
         $values = array();
         foreach(array_values($data) as $key => $elem)
         {
-            if(is_null($elem))
+            if($transformers && array_key_exists($key, $transformers))
+                sprintf($transformers[$key], $elem);
+            elseif(is_null($elem))
                 $values[$key] = 'NULL';
             elseif (is_int($elem))
                 $values[$key] = sprintf('%d', $elem);
