@@ -3,4 +3,4 @@ phpunit.xml
 composer.lock
 vendor
 composer.phar
-tests/Simbiotica/CartoDBConfig.php
+tests/Simbiotica/CartoDBClient/CartoDBConfig.php
