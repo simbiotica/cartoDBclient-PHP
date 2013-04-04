@@ -245,10 +245,15 @@ abstract class Connection
     {
         $keys = implode(',', array_keys($data));
         $values = array();
-        foreach(array_values($data) as $key => $elem)
+        foreach($data as $key => $elem)
         {
             if($transformers && array_key_exists($key, $transformers))
-                sprintf($transformers[$key], $elem);
+                {
+                    if($transformers[$key] != null)
+                        $values[$key] = sprintf($transformers[$key], $elem);
+                    else
+                        $values[$key] = 'NULL';
+                }
             elseif(is_null($elem))
                 $values[$key] = 'NULL';
             elseif (is_int($elem))
@@ -282,10 +287,15 @@ abstract class Connection
     {
         $keys = implode(',', array_keys($data));
         $values = array();
-        foreach(array_values($data) as $key => $elem)
+        foreach($data as $key => $elem)
         {
             if($transformers && array_key_exists($key, $transformers))
-                sprintf($transformers[$key], $elem);
+                {
+                    if($transformers[$key] != null)
+                        $values[$key] = sprintf($transformers[$key], $elem);
+                    else
+                        $values[$key] = 'NULL';
+                }
             elseif(is_null($elem))
                 $values[$key] = 'NULL';
             elseif (is_int($elem))
