@@ -1,10 +1,10 @@
 <?php 
 
-namespace Simbiotica\CartoDBBundle;
+namespace Simbiotica\CartoDBClient;
 
 class CartoDBConfig
 {
-    const PRIVATE_CONFIG = array(
+    static $PRIVATE_CONFIG = array(
             'api_key' => 'your-api-key',
             'consumer_key' => 'your-consumer-key',
             'consumer_secret' => 'your-consumer-secret',
@@ -13,7 +13,7 @@ class CartoDBConfig
             'password' => 'your-password',
     );
 
-    const PUBLIC_CONFIG = array(
+    static $PUBLIC_CONFIG = array(
             'subdomain' => 'your-subdomain',
     );
 }

@@ -1,18 +1,16 @@
 <?php 
 
-namespace Simbiotica\CartoDBBundle;
+namespace Simbiotica\CartoDBClient;
 
 use Simbiotica\CartoDBClient\FileStorage;
-
 use Simbiotica\CartoDBClient\PrivateConnection;
-
 use Simbiotica\CartoDBClient\SessionStorage;
 
 class CartoDBTest extends \PHPUnit_Framework_TestCase
 {
     public function testPrivateConnection()
     {
-        $config = CartoDBConfig::PRIVATE_CONFIG;
+        $config = CartoDBConfig::$PRIVATE_CONFIG;
         
         $table = 'test1';
         $schema = array(

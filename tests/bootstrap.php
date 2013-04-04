@@ -7,7 +7,6 @@ if (!file_exists($file)) {
 
 $loader = require $file;
 
-$loader->add('Simbiotica\\CartoDBClient', __DIR__.'/Simbiotica');
-$loader->add('Simbiotica\\CartoDBClient', __DIR__.'/../lib/');
+$loader->add('Simbiotica\\CartoDBClient', array(__DIR__.'/', __DIR__.'/../lib/'));
 
 ?>
