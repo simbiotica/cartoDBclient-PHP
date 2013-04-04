@@ -18,6 +18,6 @@
         "eher/oauth": "dev-master"
     },
     "autoload": {
-        "psr-0": { "Simbiotica\\CartoDBClient": "" }
+        "psr-0": { "Simbiotica": "lib/" }
     }
 }
