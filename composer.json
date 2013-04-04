@@ -15,7 +15,7 @@
     ],
     "require": {
         "php": ">=5.3.3",
-        "eher/oauth": "dev-master"
+        "eher/oauth": "1.0.*"
     },
     "autoload": {
         "psr-0": { "Simbiotica": "lib/" }
