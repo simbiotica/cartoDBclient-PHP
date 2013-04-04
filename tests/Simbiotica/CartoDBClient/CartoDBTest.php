@@ -2,23 +2,47 @@
 
 namespace Simbiotica\CartoDBBundle;
 
-use Simbiotica\CartoDBClient\FileStorage;
-
-use Simbiotica\CartoDBClient\PrivateConnection;
-
-use Simbiotica\CartoDBClient\SessionStorage;
+use Simbiotica\CartoDBClient\Connection;
 
 class CalculatorTest extends \PHPUnit_Framework_TestCase
 {
+    public function testPublicConnection()
+    {
+        //To test public connections, you should specify a table created
+        //in the dashboard. Tables created using the API are private.
+        $config = array(
+                'subdomain' => 'your-subdomain',
+        );
+    
+        $table = 'your-public-table';
+        $schema = array(
+                'name' => 'text',
+                'description' => 'text',
+        );
+    
+        $publicClient = new Connection($config['subdomain']);
+    
+        //Database can be probed for columns
+        $tableNames = $publicClient->getTableNames()->getData();
+        $this->assertContains($table, array_map(function($item){return $item->relname;}, $tableNames));
+    
+        //Table has the right columns
+        $columnData = $publicClient->showTable($table, true)->getData();
+        $columnNames = array_map(function($item){return $item->column_name;}, $columnData);
+        $this->assertContains('cartodb_id', $columnNames);
+        $this->assertContains('name', $columnNames);
+        $this->assertContains('description', $columnNames);
+    
+        //Rows can be inserted
+        $payload = $publicClient->getAllRows($table);
+        $this->assertGreaterThanOrEqual(0, $payload->getRowCount());
+    }
+    
     public function testPrivateConnection()
     {
         $config = array(
                 'api_key' => 'your-api-key',
-                'consumer_key' => 'your-consumer-key',
-                'consumer_secret' => 'your-consumer-secret',
                 'subdomain' => 'your-subdomain',
-                'email' => 'your-email',
-                'password' => 'your-password',
         );
         
         $table = 'test1';
@@ -29,14 +53,9 @@ class CalculatorTest extends \PHPUnit_Framework_TestCase
                 'somedate' => 'timestamp without time zone'
         );
         
-        $sessionStorage = new FileStorage('./tmp/cartodbauth.txt');
-        
-        $privateClient = new PrivateConnection($sessionStorage, 
-                $config['subdomain'], $config['api_key'], 
-                $config['consumer_key'], $config['consumer_secret'], 
-                $config['email'], $config['password']
+        $privateClient = new Connection(
+                $config['subdomain'], $config['api_key']
         );
-        $this->assertTrue($privateClient->authorized);
         
         //Database can be probed for columns
         $tableNames = $privateClient->getTableNames()->getData();

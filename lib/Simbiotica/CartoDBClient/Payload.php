@@ -7,7 +7,8 @@ class Payload {
     /**
      * Request data
      */
-    protected $request;
+    protected $url;
+    protected $params;
     
     /**
      * Response metadata
@@ -22,9 +23,10 @@ class Payload {
     protected $data;
     protected $rawResponse;
 
-    function __construct($request)
+    function __construct($url, $params)
     {
-        $this->request = $request;
+        $this->url = $url;
+        $this->params = $params;
     }
     
     public function setRawResponse(array $rawResponse)
@@ -51,9 +53,19 @@ class Payload {
         return $this->rawResponse;
     }
     
+    public function getUrl()
+    {
+        return $this->url;
+    }
+    
+    public function getParams()
+    {
+        return $this->params;
+    }
+    
     public function getRequest()
     {
-        return $this->request;
+        return $this->url.' '.$this->multi_implode(" <br> ", $this->params);
     }
     
     public function getTime()
@@ -104,7 +116,7 @@ class Payload {
      * @param string $index optional: index
      * @return NULL|multitype:
      */
-    function getSingleColumnValues($name, $index = null) {
+    public function getSingleColumnValues($name, $index = null) {
         if(is_null($this->data) )
         {
             return null;
@@ -129,7 +141,7 @@ class Payload {
      * @param string $index optional: index
      * @return NULL|multitype: array of rows, each with array of values
      */
-    function getColumnsValues(array $columns, $index = null) {
+    public function getColumnsValues(array $columns, $index = null) {
         if(is_null($this->data) )
         {
             return null;
@@ -145,6 +157,22 @@ class Payload {
             return $result;
         }
         return null;
+    }
+    
+    private function multi_implode($glue, $array) {
+        $ret = '';
+    
+        foreach ($array as $key => $item) {
+            if (is_array($item)) {
+                $ret .= $this->multi_implode($glue, $item) . $glue;
+            } else {
+                $ret .= $key.':'.$item . $glue;
+            }
+        }
+    
+        $ret = substr($ret, 0, 0-strlen($glue));
+    
+        return $ret;
     }
 }
 

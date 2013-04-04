@@ -9,21 +9,8 @@
 
 namespace Simbiotica\CartoDBClient;
 
-use Eher\OAuth\Request;
-use Eher\OAuth\Consumer;
-use Eher\OAuth\Token;
-use Eher\OAuth\HmacSha1;
-use Eher\OAuth;
-
-abstract class Connection
+class Connection
 {
-    const SESSION_KEY_SEED = "cartodb";
-    
-    /**
-     * Object to store token
-     **/
-    protected $storage;
-    
     /**
      * Necessary data to connect to CartoDB
      */
@@ -32,25 +19,69 @@ abstract class Connection
     /**
      * Internal variables
      */
-    public $authorized = false;
     public $json_decode = true;
     
     /**
      * Endpoint urls
      */
-    protected $oauthUrl;
     protected $apiUrl;
+    
+    /**
+     * CartoDB API key
+     */
+    protected $apiKey;
 
-    function __construct(TokenStorageInterface $storage, $subdomain)
+    function __construct($subdomain, $apiKey = null)
     {
-        $this->storage = $storage;
         $this->subdomain = $subdomain;
+        $this->apiKey = $apiKey;
         $this->apiUrl = sprintf('https://%s.cartodb.com/api/v2/', $this->subdomain);
-        
-        $this->authorized = $this->getAccessToken();
     }
     
-    abstract protected function getAccessToken();
+    protected function request($uri, $method = 'GET', $args = array())
+    {
+        if (!array_key_exists('params', $args))
+            $args['params'] = array();
+        
+        if (isset($this->apiKey))
+            $args['params']['api_key'] = $this->apiKey;
+    
+        $url = $this->apiUrl . $uri;
+    
+        if (!isset($args['headers']['Accept'])) {
+            $args['headers']['Accept'] = 'application/json';
+        }
+    
+        $options = array(
+                CURLOPT_CUSTOMREQUEST => $method,
+                CURLOPT_POSTFIELDS => $args['params'],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPAUTH => CURLAUTH_ANY,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_VERIFYHOST => false,
+                CURLOPT_HTTPHEADER => $args['headers'],
+        );
+    
+        $ch = curl_init($url);
+        curl_setopt_array($ch, $options);
+    
+        $response = array();
+        $response['return'] = ($this->json_decode) ? (array) json_decode(
+                curl_exec($ch)) : curl_exec($ch);
+        $response['info'] = curl_getinfo($ch);
+    
+        if ($response['info']['http_code'] == 401) {
+            $this->authorized = $this->getAccessToken();
+            return $this->request($uri, $method, $args);
+        }
+    
+        $payload = new Payload($url, $options);
+        $payload->setRawResponse($response);
+    
+        curl_close($ch);
+    
+        return $payload;
+    }
     
     public function runSql($sql)
     {
@@ -60,15 +91,16 @@ abstract class Connection
         $info = $payload->getInfo();
         $rawResponse = $payload->getRawResponse();
         if ($info['http_code'] != 200) {
+            var_dump($payload->getRequest());
             if (!empty($rawResponse['return']['error']))
                 throw new \RuntimeException(sprintf(
                     'There was a problem with your CartoDB request "%s": %s',
-                    $payload->getRequest()->__toString(),
+                    $payload->getRequest(),
                     implode('<br>', $rawResponse['return']['error'])));
             else
                 throw new \RuntimeException(sprintf(
                     'There was a problem with your CartoDB request "%s"',
-                    $payload->getRequest()->__toString()));
+                    $payload->getRequest()));
         }
         
         return $payload;
@@ -425,10 +457,10 @@ abstract class Connection
             $var = parse_url($var, PHP_URL_QUERY);
             $var = html_entity_decode($var);
         }
-
+    
         $var = explode('&', $var);
         $arr = array();
-
+    
         foreach ($var as $val) {
             $x = explode('=', $val);
             $arr[$x[0]] = $x[1];
