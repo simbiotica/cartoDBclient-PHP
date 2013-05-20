@@ -300,6 +300,8 @@ abstract class Connection
                 $values[$key] = 'NULL';
             elseif (is_int($elem))
                 $values[$key] = sprintf('%d', $elem);
+            elseif (is_float($elem))
+                $values[$key] = sprintf('%f', $elem);
             elseif (is_bool($elem))
                 $values[$key] = sprintf('%s', $elem?'1':'0');
             elseif (is_string($elem))
@@ -386,6 +388,8 @@ abstract class Connection
             {
                 if (is_int($elem))
                     return sprintf('%s = %d', $key, $elem);
+                if (is_float($elem))
+                    return sprintf('%s = %f', $key, $elem);
                 if (is_bool($elem))
                     return sprintf('%s = %s', $key, $elem?'1':'0');
                 if (is_string($elem))
