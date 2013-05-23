@@ -245,6 +245,7 @@ abstract class Connection
     {
         $keys = implode(',', array_keys($data));
         $values = array();
+        
         foreach($data as $key => $elem)
         {
             if($transformers && array_key_exists($key, $transformers))
@@ -258,6 +259,8 @@ abstract class Connection
                 $values[$key] = 'NULL';
             elseif (is_int($elem))
                 $values[$key] = sprintf('%d', $elem);
+            elseif (is_float($elem))
+                $values[$key] = sprintf('%f', $elem);
             elseif (is_bool($elem))
                 $values[$key] = sprintf('%s', $elem?'1':'0');
             elseif (is_string($elem))
