@@ -9,11 +9,11 @@
 
 namespace Simbiotica\CartoDBClient;
 
-use Eher\OAuth\Request;
-use Eher\OAuth\Consumer;
-use Eher\OAuth\Token;
-use Eher\OAuth\HmacSha1;
-use Eher\OAuth;
+//use Eher\OAuth\Request;
+//use Eher\OAuth\Consumer;
+//use Eher\OAuth\Token;
+//use Eher\OAuth\HmacSha1;
+//use Eher\OAuth;
 
 abstract class Connection
 {
@@ -38,7 +38,6 @@ abstract class Connection
     /**
      * Endpoint urls
      */
-    protected $oauthUrl;
     protected $apiUrl;
 
     function __construct(TokenStorageInterface $storage, $subdomain)
@@ -105,6 +104,8 @@ abstract class Connection
     }
     
     /**
+     * UPDATE: This has been blocked on CartoDB server
+     * 
      * API v2 - Not officialy supported
      * 
      * Retrieves metadata about the table columns
@@ -115,6 +116,7 @@ abstract class Connection
      */
     public function showTable($table, $full = false)
     {
+        return new \RuntimeException("Support for this operation was removed in CartoDB");
         if ($full)
             $sql = sprintf("SELECT * FROM information_schema.columns WHERE table_name ='%s'", $table);
         else
@@ -220,12 +222,15 @@ abstract class Connection
     }
 
     /**
+     * UPDATE: This has been blocked on CartoDB server
+     * 
      * API v2 - Not officialy supported
      * 
      * Gets the name of all available tables
      */
     public function getTableNames()
     {
+        return new \RuntimeException("Support for this operation was removed in CartoDB");
         $sql = "SELECT \"pg_class\".\"oid\", \"pg_class\".\"relname\" FROM \"pg_class\" INNER JOIN \"pg_namespace\" ON (\"pg_namespace\".\"oid\" = \"pg_class\".\"relnamespace\") WHERE ((\"relkind\" = 'r') AND (\"nspname\" = 'public') AND (\"relname\" NOT IN ('spatial_ref_sys', 'geography_columns', 'geometry_columns', 'raster_columns', 'raster_overviews', 'cdb_tablemetadata')))";
                 
         return $this->runSql($sql);

@@ -10,10 +10,6 @@
 namespace Simbiotica\CartoDBClient;
 
 use Eher\OAuth\Request;
-use Eher\OAuth\Consumer;
-use Eher\OAuth\Token;
-use Eher\OAuth\HmacSha1;
-use Eher\OAuth;
 
 class PublicConnection extends Connection
 {
@@ -72,7 +68,10 @@ class PublicConnection extends Connection
     {
         //No access token is needed, so we'll just check if we can access some tables.
         try {
-            $payload = $this->getTableNames();
+            //UPDATE: this has been disables on CartoDB. For now, there is no way
+            //to determine this, so we'll just assume true
+            //$payload = $this->getTableNames();
+            return true;
         } catch (\RuntimeException $e) {
             return false;
         }

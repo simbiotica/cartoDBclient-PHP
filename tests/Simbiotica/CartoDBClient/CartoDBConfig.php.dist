@@ -4,18 +4,22 @@ namespace Simbiotica\CartoDBClient;
 
 class CartoDBConfig
 {
-    static $PRIVATE_CONFIG = array(
+    static function getPrivateConfig() {
+        return array(
             'api_key' => 'your-api-key',
             'consumer_key' => 'your-consumer-key',
             'consumer_secret' => 'your-consumer-secret',
             'subdomain' => 'your-subdomain',
             'email' => 'your-email',
             'password' => 'your-password',
-    );
-
-    static $PUBLIC_CONFIG = array(
+        );
+    }
+    
+    static function getPublicConfig() {
+        return array(
             'subdomain' => 'your-subdomain',
-    );
+        );
+    }
 }
 
 ?>

@@ -13,7 +13,6 @@ use Eher\OAuth\Request;
 use Eher\OAuth\Consumer;
 use Eher\OAuth\Token;
 use Eher\OAuth\HmacSha1;
-use Eher\OAuth;
 
 class PrivateConnection extends Connection
 {
@@ -25,6 +24,8 @@ class PrivateConnection extends Connection
     protected $consumerSecret;
     protected $email;
     protected $password;
+    
+    protected $oauthUrl;
     
     /**
      * Constructs CartoDB connection and stores token in session
@@ -39,8 +40,6 @@ class PrivateConnection extends Connection
      */
     function __construct(TokenStorageInterface $storage, $subdomain, $apiKey, $consumerKey, $consumerSecret, $email, $password)
     {
-        parent::__construct($storage, $subdomain);
-        
         $this->apiKey = $apiKey;
         $this->consumerKey = $consumerKey;
         $this->consumerSecret = $consumerSecret;
@@ -49,30 +48,41 @@ class PrivateConnection extends Connection
 
         $this->oauthUrl = sprintf('https://%s.cartodb.com/oauth/', $this->subdomain);
 
-        $this->authorized = $this->getAccessToken();
+        parent::__construct($storage, $subdomain);
     }
     
     protected function request($uri, $method = 'GET', $args = array())
     {
         if (!array_key_exists('params', $args))
             $args['params'] = array();
-        $args['params']['api_key'] = $this->apiKey;
         
         $url = $this->apiUrl . $uri;
-        $sig_method = new HmacSha1();
-        $consumer = new Consumer($this->consumerKey, $this->consumerSecret, NULL);
-        $token = $this->storage->getToken();
-
-        $acc_req = Request::from_consumer_and_token($consumer, $token,
-                $method, $url, $args['params']);
         if (!isset($args['headers']['Accept'])) {
             $args['headers']['Accept'] = 'application/json';
         }
+        
+        if(!empty($this->apiKey))
+        {
+            $args['params']['api_key'] = $this->apiKey;
+            $request = new Request($method, $url, isset($args['params'])?$args['params']:array());
+        }
+        elseif (!empty($this->consumerKey) && !empty($this->consumerSecret) )
+        {
+            $sig_method = new HmacSha1();
+            $consumer = new Consumer($this->consumerKey, $this->consumerSecret, NULL);
+            $token = $this->storage->getToken();
 
-        $acc_req->sign_request($sig_method, $consumer, $token);
+            $request = Request::from_consumer_and_token($consumer, $token,
+                    $method, $url, $args['params']);
+            $request->sign_request($sig_method, $consumer, $token);
+        }
+        else {
+            throw new \RuntimeException('Need at least one authentication method to access private tables');
+        }
+
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $acc_req->to_postdata());
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $request->to_postdata());
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -91,29 +101,43 @@ class PrivateConnection extends Connection
             return $this->request($uri, $method, $args);
         }
         
-        $payload = new Payload($acc_req);
+        $payload = new Payload($request);
         $payload->setRawResponse($response);
         return $payload;
     }
 
     protected function getAccessToken()
     {
-        $sig_method = new HmacSha1();
-        $consumer = new Consumer($this->consumerKey, $this->consumerSecret, NULL);
+        $params = array();
+        if(!empty($this->apiKey))
+        {
+            //for now there is no way to determine if user is authenticated
+            //using just the api key, so we assume it is
+            return true;
+        }
+        elseif (!empty($this->consumerKey) && !empty($this->consumerSecret) )
+        {
+            $sig_method = new HmacSha1();
+            $consumer = new Consumer($this->consumerKey, $this->consumerSecret, NULL);
 
-        $params = array(
-                'x_auth_username' => $this->email,
-                'x_auth_password' => $this->password,
-                'x_auth_mode' => 'client_auth'
-        );
+            $params = array(
+                    'x_auth_username' => $this->email,
+                    'x_auth_password' => $this->password,
+                    'x_auth_mode' => 'client_auth'
+            );
 
-        $acc_req = Request::from_consumer_and_token($consumer, NULL,
-                "POST", $this->oauthUrl . 'access_token', $params);
+            $request = Request::from_consumer_and_token($consumer, NULL,
+                    "POST", $this->oauthUrl . 'access_token', $params);
 
-        $acc_req->sign_request($sig_method, $consumer, NULL);
+            $request->sign_request($sig_method, $consumer, NULL);
+        }
+        else {
+            throw new \RuntimeException('Need at least one authentication method to access private tables');
+        }
+        
         $ch = curl_init($this->oauthUrl . 'access_token');
         curl_setopt($ch, CURLOPT_POST, True);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $acc_req->to_postdata());
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $request->to_postdata());
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
