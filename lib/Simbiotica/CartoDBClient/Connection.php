@@ -394,13 +394,15 @@ abstract class Connection
         {
             $filterString = implode(' AND ', array_map(function($key, $elem)
             {
-                if (is_int($elem))
+                if (is_null($elem))
+                    return sprintf('%s is null', $key);
+                elseif (is_int($elem))
                     return sprintf('%s = %d', $key, $elem);
-                if (is_float($elem))
+                elseif (is_float($elem))
                     return sprintf('%s = %f', $key, $elem);
-                if (is_bool($elem))
+                elseif (is_bool($elem))
                     return sprintf('%s = %s', $key, $elem?'1':'0');
-                if (is_string($elem))
+                elseif (is_string($elem))
                     return sprintf('%s = \'%s\'', $key, $elem);
             }, array_keys($filter), $filter));
         }
