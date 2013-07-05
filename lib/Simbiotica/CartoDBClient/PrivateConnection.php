@@ -38,7 +38,7 @@ class PrivateConnection extends Connection
      * @param unknown $email
      * @param unknown $password
      */
-    function __construct(TokenStorageInterface $storage, $subdomain, $apiKey, $consumerKey, $consumerSecret, $email, $password)
+    function __construct($storage, $subdomain, $apiKey, $consumerKey, $consumerSecret, $email, $password)
     {
         $this->apiKey = $apiKey;
         $this->consumerKey = $consumerKey;
@@ -117,6 +117,11 @@ class PrivateConnection extends Connection
         }
         elseif (!empty($this->consumerKey) && !empty($this->consumerSecret) )
         {
+            if(!$this->storage instanceof TokenStorageInterface)
+            {
+                throw new \RuntimeException('A TokenStorageInterface is needed to use oauth authentication.');
+            }
+            
             $sig_method = new HmacSha1();
             $consumer = new Consumer($this->consumerKey, $this->consumerSecret, NULL);
 

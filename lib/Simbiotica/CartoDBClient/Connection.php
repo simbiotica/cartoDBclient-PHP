@@ -40,7 +40,7 @@ abstract class Connection
      */
     protected $apiUrl;
 
-    function __construct(TokenStorageInterface $storage, $subdomain)
+    function __construct($storage, $subdomain)
     {
         $this->storage = $storage;
         $this->subdomain = $subdomain;
@@ -74,6 +74,21 @@ abstract class Connection
     }
 
     /**
+     * UPDATE: This has been blocked on CartoDB server
+     * 
+     * API v2 - Not officialy supported
+     * 
+     * Gets the name of all available tables
+     */
+    public function getTableNames()
+    {
+        return new \RuntimeException("Support for this operation was removed in CartoDB");
+        $sql = "SELECT get_tables_list()";
+                
+        return $this->runSql($sql);
+    }
+
+    /**
      * API v2 - Not officialy supported
      * 
      * Creates a new table
@@ -100,28 +115,6 @@ abstract class Connection
         else
             $sql = sprintf("CREATE TABLE IF NOT EXISTS %s", $table);
         
-        return $this->runSql($sql);
-    }
-    
-    /**
-     * UPDATE: This has been blocked on CartoDB server
-     * 
-     * API v2 - Not officialy supported
-     * 
-     * Retrieves metadata about the table columns
-     * 
-     * @param unknown $table Table name
-     * @param boolean $full If true, retrieves full column information. Defaults to false,
-     * which only returns the names
-     */
-    public function showTable($table, $full = false)
-    {
-        return new \RuntimeException("Support for this operation was removed in CartoDB");
-        if ($full)
-            $sql = sprintf("SELECT * FROM information_schema.columns WHERE table_name ='%s'", $table);
-        else
-            $sql = sprintf("SELECT column_name FROM information_schema.columns WHERE table_name ='%s'", $table);
-    
         return $this->runSql($sql);
     }
 
@@ -156,6 +149,31 @@ abstract class Connection
         return $this->runSql($sql);
     }
 
+    /**
+     * Retrieves column names
+     * 
+     * @param unknown $table Table name
+     */
+    public function getColumnNames($table)
+    {
+        $sql = sprintf("SELECT CDB_ColumnNames('%s')", $table);
+    
+        return $this->runSql($sql);
+    }
+
+    /**
+     * Retrieves column types
+     * 
+     * @param unknown $table Table name
+     * @param unknown $columnName Column name
+     */
+    public function getColumnType($table, $columnName)
+    {
+        $sql = sprintf("SELECT CDB_ColumnType('%s', '%s')", $table, $columnName);
+    
+        return $this->runSql($sql);
+    }
+ 
     /**
      * API v2 - Not officialy supported
      * 
@@ -218,21 +236,6 @@ abstract class Connection
     {
         $sql = sprintf("ALTER TABLE %s ALTER COLUMN %s TYPE %s", $table, $column_name, $new_column_type);
     
-        return $this->runSql($sql);
-    }
-
-    /**
-     * UPDATE: This has been blocked on CartoDB server
-     * 
-     * API v2 - Not officialy supported
-     * 
-     * Gets the name of all available tables
-     */
-    public function getTableNames()
-    {
-        return new \RuntimeException("Support for this operation was removed in CartoDB");
-        $sql = "SELECT \"pg_class\".\"oid\", \"pg_class\".\"relname\" FROM \"pg_class\" INNER JOIN \"pg_namespace\" ON (\"pg_namespace\".\"oid\" = \"pg_class\".\"relnamespace\") WHERE ((\"relkind\" = 'r') AND (\"nspname\" = 'public') AND (\"relname\" NOT IN ('spatial_ref_sys', 'geography_columns', 'geometry_columns', 'raster_columns', 'raster_overviews', 'cdb_tablemetadata')))";
-                
         return $this->runSql($sql);
     }
 
