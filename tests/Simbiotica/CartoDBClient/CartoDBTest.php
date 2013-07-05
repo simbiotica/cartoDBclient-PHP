@@ -44,8 +44,8 @@ class CartoDBTest extends \PHPUnit_Framework_TestCase
 //        
 //        //Create table
 //        $privateClient->createTable($table, $schema);
-//        
-//        //Table has the right columns
+        
+        //Table has the right columns
         $columnNames = array_map(function($item){return $item->cdb_columnnames;}, $privateClient->getColumnNames($table)->getData());
         $this->assertContains('cartodb_id', $columnNames);
         $this->assertContains('name', $columnNames);
