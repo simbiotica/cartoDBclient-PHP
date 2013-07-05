@@ -249,7 +249,7 @@ abstract class Connection
      * 
      * @return cartodb_id of inserted row
      */
-    public function insertRow($table, $data, $transformers = array())
+    public function insertRow($table, $data, $transformers = array(), $options = '')
     {
         $keys = implode(',', array_keys($data));
         $values = array();
@@ -278,7 +278,7 @@ abstract class Connection
         }
         $valuesString = implode(',', $values);
         
-        $sql = "INSERT INTO $table ($keys) VALUES($valuesString) RETURNING cartodb_id;";
+        $sql = "INSERT INTO $table ($keys) VALUES($valuesString) $options RETURNING cartodb_id;";
         
         return $this->runSql($sql);
     }
