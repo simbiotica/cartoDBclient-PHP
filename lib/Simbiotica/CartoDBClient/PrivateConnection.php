@@ -203,6 +203,123 @@ class PrivateConnection extends Connection
         unset($val, $x, $var);
         return $arr;
     }
+    
+    function importTable($filePath) {
+        $url = sprintf('https://%s.cartodb.com/api/v1/imports/', $this->subdomain);
+        $params = array();
+        $params['file'] = ('@'.realpath($filePath));
+        
+        $headers = array();
+        $headers['Accept'] = 'application/json';
+        
+        if(!empty($this->apiKey))
+        {
+            $params['api_key'] = $this->apiKey;
+            $request = new Request('POST', $url, $params);
+        }
+        elseif (!empty($this->consumerKey) && !empty($this->consumerSecret) )
+        {
+            $sig_method = new HmacSha1();
+            $consumer = new Consumer($this->consumerKey, $this->consumerSecret, NULL);
+            $token = $this->storage->getToken();
+
+            $request = Request::from_consumer_and_token($consumer, $token,
+                    'POST', $url, $params);
+            $request->sign_request($sig_method, $consumer, $token);
+        }
+        else {
+            throw new \RuntimeException('Need at least one authentication method to access private tables');
+        }
+        
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        
+        $response = array();
+        $response['return'] = ($this->json_decode) ? (array) json_decode(
+                        curl_exec($ch)) : curl_exec($ch);
+        $response['info'] = curl_getinfo($ch);
+
+        curl_close($ch);
+
+        if ($response['info']['http_code'] == 401) {
+            $this->authorized = $this->getAccessToken();
+            return $this->request($url, 'POST', $params);
+        }
+        
+        $payload = new Payload($request);
+        $payload->setRawResponse($response);
+        return $payload;
+//        
+//        
+//        //wait for asyncronous response
+//        $finished = false;
+//        $target_url = 'https://user.cartodb.com/api/v1/imports/' . $result->item_queue_id . '?api_key=key';
+//        $status = null;
+//        while (!$finished) {
+//            $status = json_decode(file_get_contents($target_url, 0, null, null));
+//            $finished = $status->success;
+//        }
+//        var_dump($status);
+    }
+    function checkImportStatus($importId){
+
+        $url = sprintf('https://%s.cartodb.com/api/v1/imports/%s', $this->subdomain, $importId);
+        $params = array();
+        
+        
+        $headers = array();
+        $headers['Accept'] = 'application/json';
+        
+        if(!empty($this->apiKey))
+        {
+            $params['api_key'] = $this->apiKey;
+            $request = new Request('POST', $url, $params);
+        }
+        elseif (!empty($this->consumerKey) && !empty($this->consumerSecret) )
+        {
+            $sig_method = new HmacSha1();
+            $consumer = new Consumer($this->consumerKey, $this->consumerSecret, NULL);
+            $token = $this->storage->getToken();
+
+            $request = Request::from_consumer_and_token($consumer, $token,
+                    'GET', $url, $params);
+            $request->sign_request($sig_method, $consumer, $token);
+        }
+        else {
+            throw new \RuntimeException('Need at least one authentication method to access private tables');
+        }
+        
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        
+        $response = array();
+        $response['return'] = ($this->json_decode) ? (array) json_decode(
+                        curl_exec($ch)) : curl_exec($ch);
+        $response['info'] = curl_getinfo($ch);
+
+        curl_close($ch);
+
+        if ($response['info']['http_code'] == 401) {
+            $this->authorized = $this->getAccessToken();
+            return $this->request($url, 'POST', $params);
+        }
+        
+        $payload = new Payload($request);
+        $payload->setRawResponse($response);
+        return $payload;
+    }
 }
 
 ?>
