@@ -9,12 +9,6 @@
 
 namespace Simbiotica\CartoDBClient;
 
-//use Eher\OAuth\Request;
-//use Eher\OAuth\Consumer;
-//use Eher\OAuth\Token;
-//use Eher\OAuth\HmacSha1;
-//use Eher\OAuth;
-
 abstract class Connection
 {
     const SESSION_KEY_SEED = "cartodb";
@@ -131,13 +125,15 @@ abstract class Connection
     
         return $this->runSql($sql);
     }
-    
+
     /**
      * API v2 - Not officialy supported
      *
      * Deletes all rows from a table
      *
      * @param unknown $table Table name
+     * @param bool $restartId If true, identity on the table is restarted
+     * @return
      */
     public function truncateTable($table, $restartId = true)
     {
@@ -241,40 +237,30 @@ abstract class Connection
 
     /**
      * API v2
-     * 
-     * Inserts data row into $table. 
-     * 
+     *
+     * Inserts data row into $table.
+     *
      * @param unknown $table Name of table
      * @param unknown $data Array with ($column_name => $new_value) pairs to be updated
-     * 
+     * @param array $transformers
+     * @param string $options
      * @return cartodb_id of inserted row
      */
     public function insertRow($table, $data, $transformers = array(), $options = '')
     {
         $keys = implode(',', array_keys($data));
         $values = array();
-        
-        foreach($data as $key => $elem)
-        {
-            if($transformers && array_key_exists($key, $transformers))
-                {
-                    if($transformers[$key] != null)
-                        $values[$key] = sprintf($transformers[$key], $elem);
-                    else
-                        $values[$key] = 'NULL';
+
+        foreach ($data as $key => $elem) {
+            if ($transformers && array_key_exists($key, $transformers)) {
+                if($transformers[$key] != null) {
+                    $values[$key] = sprintf($transformers[$key], $this->quote($elem));
+                } else {
+                    $values[$key] = 'NULL';
                 }
-            elseif(is_null($elem))
-                $values[$key] = 'NULL';
-            elseif (is_int($elem))
-                $values[$key] = sprintf('%d', $elem);
-            elseif (is_float($elem))
-                $values[$key] = sprintf('%f', $elem);
-            elseif (is_bool($elem))
-                $values[$key] = sprintf('%s', $elem?'1':'0');
-            elseif (is_string($elem))
-                $values[$key] = sprintf('\'%s\'', pg_escape_string($elem));
-            elseif ($elem instanceof \DateTime)
-                $values[$key] = sprintf('\'%s\'', $elem->format('Y-m-d\TH:i:sP'));
+            } else {
+                $values[$key] = $this->quote($elem);
+            }
         }
         $valuesString = implode(',', $values);
         
@@ -285,46 +271,59 @@ abstract class Connection
 
     /**
      * API v2
-     * 
+     *
      * For $table, updates row with cartodb_id $row_id with $data values
      * A set of optional transformers can be applied, to allow for sql funcitons like count() and such
-     * 
+     *
      * @param unknown $table Table to be updated
      * @param unknown $row_id Cartodb_id of the row to be updated
-     * @param unknown $data Array with ($column_name => $new_value) pairs to be updated 
-     * @param unknown $transformers Array with ($column_name => $transformer) to be applied to $data values 
+     * @param unknown $data Array with ($column_name => $new_value) pairs to be updated
+     * @param array|\Simbiotica\CartoDBClient\unknown $transformers Array with ($column_name => $transformer) to be applied to $data values
+     * @return
      */
     public function updateRow($table, $row_id, $data, $transformers = array())
     {
         $keys = implode(',', array_keys($data));
         $values = array();
-        foreach($data as $key => $elem)
-        {
-            if($transformers && array_key_exists($key, $transformers))
-                {
-                    if($transformers[$key] != null)
-                        $values[$key] = sprintf($transformers[$key], $elem);
-                    else
-                        $values[$key] = 'NULL';
+        foreach ($data as $key => $elem) {
+            if ($transformers && array_key_exists($key, $transformers)) {
+                if($transformers[$key] != null) {
+                    $values[$key] = sprintf($transformers[$key], $this->quote($elem));
+                } else {
+                    $values[$key] = 'NULL';
                 }
-            elseif(is_null($elem))
-                $values[$key] = 'NULL';
-            elseif (is_int($elem))
-                $values[$key] = sprintf('%d', $elem);
-            elseif (is_float($elem))
-                $values[$key] = sprintf('%f', $elem);
-            elseif (is_bool($elem))
-                $values[$key] = sprintf('%s', $elem?'1':'0');
-            elseif (is_string($elem))
-                $values[$key] = sprintf('\'%s\'', pg_escape_string($elem));
-            elseif ($elem instanceof \DateTime)
-                $values[$key] = sprintf('\'%s\'', $elem->format('Y-m-d\TH:i:sP'));
+            } else {
+                $values[$key] = $this->quote($elem);
+            }
         }
         $valuesString = implode(',', $values);
         
         $sql = "UPDATE $table SET ($keys) = ($valuesString) WHERE cartodb_id = $row_id RETURNING cartodb_id;";
         
         return $this->runSql($sql);
+    }
+
+    /**
+     * Escapes a value
+     *
+     * @param $elem
+     * @return string
+     */
+    private function quote($elem)
+    {
+        if (is_null($elem)) {
+            return 'NULL';
+        } elseif (is_int($elem)) {
+            return sprintf('%d', $elem);
+        } elseif (is_float($elem)) {
+            return sprintf('%f', $elem);
+        } elseif (is_bool($elem)) {
+            return sprintf('%s', $elem ? '1' : '0');
+        } elseif (is_string($elem)) {
+            return sprintf('\'%s\'', pg_escape_string($elem));
+        } elseif ($elem instanceof \DateTime) {
+            return sprintf('\'%s\'', $elem->format('Y-m-d\TH:i:sP'));
+        }
     }
 
     /**
@@ -359,30 +358,35 @@ abstract class Connection
 
     /**
      * API v2
-     * 
+     *
      * Gets given columns from all the records of a defined table.
      * @param $table the name of table
+     * @param null $columns
      * @param $params array of parameters.
      *   Valid parameters:
      *   - 'rows_per_page' : Number of rows per page.
      *   - 'page' : Page index.
      *   - 'order' : array of $column => asc/desc.
+     * @return
      */
     public function getAllRowsForColumns($table, $columns = null, $params = array())
     {
         return $this->getRowsForColumns($table, $columns, $filter = null, $params);
     }
-    
+
     /**
      * API v2
-     * 
+     *
      * Gets given columns from the records of a defined table that match the given condition.
      * @param $table the name of table
+     * @param null $columns
+     * @param null $filter
      * @param $params array of parameters.
      *   Valid parameters:
      *   - 'rows_per_page' : Number of rows per page.
      *   - 'page' : Page index.
      *   - 'order' : array of $column => asc/desc.
+     * @return
      */
     public function getRowsForColumns($table, $columns = null, $filter = null, $params = array())
     {
