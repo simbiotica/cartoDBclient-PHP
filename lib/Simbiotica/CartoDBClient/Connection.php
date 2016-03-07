@@ -91,7 +91,6 @@ class Connection
         $info = $payload->getInfo();
         $rawResponse = $payload->getRawResponse();
         if ($info['http_code'] != 200) {
-            var_dump($payload->getRequest());
             if (!empty($rawResponse['return']['error']))
                 throw new \RuntimeException(sprintf(
                     'There was a problem with your CartoDB request "%s": %s',
